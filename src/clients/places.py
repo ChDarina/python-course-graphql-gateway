@@ -1,10 +1,10 @@
 from http.client import HTTPException
 from typing import Optional
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urljoin
 
-from src.clients.base.base import BaseClient
-from src.models.places import PlaceModel
-from src.settings import settings
+from clients.base.base import BaseClient
+from models.places import PlaceModel, PlaceUpdate
+from settings import settings
 
 
 class PlacesClient(BaseClient):
@@ -24,7 +24,7 @@ class PlacesClient(BaseClient):
         :return:
         """
 
-        endpoint = f"/api/v1/places/{place_id}"
+        endpoint = f"http://favorite-places-app:8000/api/v1/places/{place_id}"
         url = urljoin(self.base_url, endpoint)
 
         if response := self._request(self.GET, url):
@@ -33,20 +33,20 @@ class PlacesClient(BaseClient):
 
         return None
 
-    def get_list(self) -> Optional[list[PlaceModel]]:
+    def get_list(self, page: Optional[int], size: Optional[int]) -> Optional[list[PlaceModel]]:
         """
         Получение списка любимых мест.
-        TODO: добавить пагинацию.
+        :param page: Номер страницы.
+        :param size: Размер страницы.
         :return:
         """
+        page = page if page else 1
+        size = size if size else 50
 
-        endpoint = "/api/v1/places"
-        query_params = {
-            "limit": 20,
-        }
-        url = urljoin(self.base_url, f"{endpoint}?{urlencode(query_params)}")
+        endpoint = "http://favorite-places-app:8000/api/v1/places"
+        url = urljoin(self.base_url, f"{endpoint}?page={page}&size={size}")
         if response := self._request(self.GET, url):
-            return [self.__build_model(place) for place in response.get("data", [])]
+            return [self.__build_model(place) for place in response.get("items", [])]
 
         return None
 
@@ -58,7 +58,7 @@ class PlacesClient(BaseClient):
         :return:
         """
 
-        endpoint = "/api/v1/places"
+        endpoint = "http://favorite-places-app:8000/api/v1/places"
         url = urljoin(self.base_url, endpoint)
         if response := self._request(self.POST, url, body=place.dict()):
             if place_data := response.get("data"):
@@ -74,7 +74,7 @@ class PlacesClient(BaseClient):
         :return:
         """
 
-        endpoint = f"/api/v1/places/{place_id}"
+        endpoint = f"http://favorite-places-app:8000/api/v1/places/{place_id}"
         url = urljoin(self.base_url, endpoint)
         result = True
         try:
@@ -83,6 +83,22 @@ class PlacesClient(BaseClient):
             result = False
 
         return result
+
+    def update_place(self, place_id: int, place: PlaceUpdate) -> Optional[PlaceModel]:
+        """
+        Обновление объекта любимого места по его идентификатору.
+
+        :param place_id: Идентификатор любимого места.
+        :param place: Модель для обновления любимого места.
+        :return:
+        """
+        endpoint = f"http://favorite-places-app:8000/api/v1/places/{place_id}"
+        url = urljoin(self.base_url, endpoint)
+        if response := self._request(self.PATCH, url, body=place.dict()):
+            if place_data := response.get("data"):
+                return self.__build_model(place_data)
+
+        return None
 
     @staticmethod
     def __build_model(data: dict) -> PlaceModel:
