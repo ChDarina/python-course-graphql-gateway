@@ -1,9 +1,9 @@
 from typing import Optional
 from urllib.parse import urljoin
 
-from src.clients.base.base import BaseClient
-from src.models.countries import CountryModel
-from src.settings import settings
+from clients.base.base import BaseClient
+from models.countries import CountryModel
+from settings import settings
 
 
 class CountriesClient(BaseClient):
@@ -24,7 +24,7 @@ class CountriesClient(BaseClient):
         :return:
         """
 
-        endpoint = "/api/v1/country"
+        endpoint = "http://countries-informer-app:8000/api/v1/country"
 
         query_params = ""
         for code in alpha2codes:

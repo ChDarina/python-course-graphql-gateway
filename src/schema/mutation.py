@@ -3,9 +3,9 @@ from typing import Any, Optional
 import graphene
 from graphql import ResolveInfo
 
-from src.models.places import PlaceModel
-from src.schema.query import Place
-from src.services.places import PlacesService
+from models.places import PlaceModel, PlaceUpdate
+from schema.query import Place
+from services.places import PlacesService
 
 
 class CreatePlace(graphene.Mutation):
@@ -46,6 +46,52 @@ class CreatePlace(graphene.Mutation):
         )
 
         return CreatePlace(place=place, result=bool(place))
+
+
+class UpdatePlace(graphene.Mutation):
+    """
+    Функции для обновления объекта любимого места.
+    """
+
+    class Arguments:
+        place_id = graphene.Int()
+        description = graphene.String()
+        latitude = graphene.Float()
+        longitude = graphene.Float()
+
+    result = graphene.Boolean()
+    place = graphene.Field(Place)
+
+    @staticmethod
+    def mutate(
+        parent: Optional[dict],
+        info: ResolveInfo,
+        place_id: int,
+        **kwargs: dict[str, Any]
+    ) -> "UpdatePlace":
+        """
+        Обработка запроса для обновления нового объекта.
+
+        :param parent: Информация о родительском объекте (при наличии).
+        :param info: Объект с метаинформацией и данных о контексте запроса.
+        :param place_id: Идентификатор любимого места для обновления.
+        :param kwargs: Атрибуты со значениями для создания нового объекта.
+        :return:
+        """
+
+        # pylint: disable=unused-argument
+
+        # получение результата обновления объекта
+        place = PlacesService().update_place(
+            place_id,
+            PlaceUpdate(
+                description=kwargs.get("description"),
+                latitude=kwargs.get("latitude"),
+                longitude=kwargs.get("longitude"),
+            ),
+        )
+
+        return UpdatePlace(place=place, result=bool(place))
 
 
 class DeletePlace(graphene.Mutation):
@@ -89,3 +135,6 @@ class Mutation(graphene.ObjectType):
 
     #: метод удаления объекта любимого места
     delete_place = DeletePlace.Field()
+
+    #: метод обновления объекта любимого места
+    update_place = UpdatePlace.Field()
